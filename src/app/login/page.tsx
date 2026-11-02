@@ -1,8 +1,132 @@
 "use client";
-import { useState } from "react";
+
+import Image from "next/image";
 import Link from "next/link";
+import { useState } from "react";
 
 export default function RestaurantLogin() {
   const [show, setShow] = useState(false);
-  return <main className="grid min-h-screen bg-[#f5f7f4] lg:grid-cols-[1fr_1fr]"><section className="relative hidden overflow-hidden bg-[#13251d] p-12 text-white lg:flex lg:flex-col lg:justify-between"><Link href="/" className="flex items-center gap-3 text-lg font-extrabold"><span className="grid size-10 place-items-center rounded-[14px] bg-[#c2e78a] text-xl text-[#183729]">f</span>field/kitchen</Link><div className="relative z-10 max-w-lg"><p className="text-[10px] font-bold uppercase tracking-[.2em] text-[#c2e78a]">Restaurant partner portal</p><h1 className="mt-5 text-5xl font-extrabold leading-[1.08] tracking-[-.05em]">Your kitchen, running smoothly.</h1><p className="mt-5 max-w-md text-sm leading-6 text-[#b7c6bc]">Take orders, keep your menu fresh, and understand how your restaurant is performing.</p><div className="mt-8 flex gap-6 text-[10px] text-[#cad8ce]"><span>01 · Orders</span><span>02 · Menu</span><span>03 · Payouts</span></div></div><div className="absolute -bottom-28 -right-20 size-[430px] rounded-full border border-white/10" /><p className="text-[10px] text-[#8ea196]">FOOD DELIVERY · RESTAURANT PARTNERS</p></section><section className="flex items-center justify-center px-6 py-12"><form className="w-full max-w-[390px] rounded-[26px] border border-[#e6ebe4] bg-white p-8 shadow-[0_18px_60px_rgba(25,48,32,.08)]" onSubmit={(event) => { event.preventDefault(); window.location.href = "/"; }}><p className="text-[10px] font-bold uppercase tracking-[.18em] text-[#56815d]">Partner sign in</p><h2 className="mt-3 text-2xl font-extrabold tracking-tight text-[#1c2921]">Welcome to your kitchen</h2><p className="mt-2 text-xs text-[#879189]">Use the restaurant account your platform owner created.</p><label className="mt-7 block text-[10px] font-bold text-[#546158]">Work email<input type="email" required placeholder="you@restaurant.com" className="mt-2 h-11 w-full rounded-xl border border-[#e3e9e2] px-3 text-xs outline-none focus:border-[#6e9c73]" /></label><label className="mt-4 block text-[10px] font-bold text-[#546158]">Password<span className="relative mt-2 block"><input type={show ? "text" : "password"} required placeholder="Enter your password" className="h-11 w-full rounded-xl border border-[#e3e9e2] px-3 pr-16 text-xs outline-none focus:border-[#6e9c73]" /><button type="button" onClick={() => setShow(!show)} className="absolute right-3 top-3 text-[10px] text-[#718078]">{show ? "Hide" : "Show"}</button></span></label><div className="mt-4 text-right text-[10px]"><a href="#" className="font-bold text-[#39734d]">Forgot password?</a></div><button className="mt-6 h-11 w-full rounded-xl bg-[#26724e] text-xs font-bold text-white hover:bg-[#1d6241]">Sign in securely</button><div className="mt-6 border-t border-[#edf0ec] pt-5 text-center"><p className="text-[10px] text-[#879189]">New to the platform?</p><Link href="/onboarding" className="mt-2 inline-block text-[10px] font-bold text-[#39734d]">Apply as a restaurant partner →</Link></div></form></section></main>;
+
+  return (
+    <main className="grid min-h-screen bg-background lg:grid-cols-[1.05fr_0.95fr]">
+      <section className="relative hidden overflow-hidden bg-charcoal text-white lg:flex lg:flex-col lg:justify-between">
+        <div className="absolute inset-0">
+          <Image src="/images/login-hero.jpg" alt="" fill className="object-cover opacity-35" priority />
+          <div className="absolute inset-0 bg-gradient-to-br from-charcoal via-charcoal/92 to-charcoal/70" />
+          <div className="absolute inset-0 crave-grid opacity-40" />
+          <div className="absolute -left-20 top-24 size-72 rounded-full bg-lime/20 blur-3xl" />
+          <div className="absolute bottom-10 right-0 size-80 rounded-full bg-lime/10 blur-3xl" />
+        </div>
+
+        <div className="relative z-10 p-12">
+          <Link href="/" className="inline-flex">
+            <Image
+              src="/brand/crave-logo-white.png"
+              alt="Crave"
+              width={160}
+              height={54}
+              className="h-10 w-auto object-contain"
+              priority
+            />
+          </Link>
+        </div>
+
+        <div className="relative z-10 max-w-xl px-12 pb-8">
+          <p className="text-[11px] font-bold uppercase tracking-[0.22em] text-lime">Restaurant partner portal</p>
+          <h1 className="font-display mt-5 text-5xl font-bold leading-[1.05] tracking-[-0.05em]">
+            Your kitchen, running smoothly.
+          </h1>
+          <p className="mt-5 max-w-md text-[15px] leading-7 text-white/60">
+            Take orders, keep your menu fresh, and understand how your restaurant is performing on Crave.
+          </p>
+          <div className="mt-8 flex gap-6 text-[11px] font-semibold uppercase tracking-[0.14em] text-white/40">
+            <span>01 · Orders</span>
+            <span>02 · Menu</span>
+            <span>03 · Payouts</span>
+          </div>
+        </div>
+
+        <div className="relative z-10 flex items-end justify-between gap-6 px-12 pb-12">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-white/35">Crave · Partners</p>
+          <Image
+            src="/images/lime-scooter.png"
+            alt=""
+            width={180}
+            height={180}
+            className="h-28 w-auto object-contain opacity-90"
+          />
+        </div>
+      </section>
+
+      <section className="flex items-center justify-center px-6 py-12">
+        <form
+          className="w-full max-w-[420px] rounded-[28px] border border-line bg-card p-8 shadow-[0_24px_80px_rgba(17,17,17,0.08)] sm:p-10"
+          onSubmit={(event) => {
+            event.preventDefault();
+            window.location.href = "/";
+          }}
+        >
+          <div className="mb-8 flex items-center gap-3 lg:hidden">
+            <div className="rounded-xl bg-charcoal px-3 py-2">
+              <Image src="/brand/crave-logo-white.png" alt="Crave" width={100} height={34} className="h-6 w-auto" />
+            </div>
+          </div>
+
+          <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-muted">Partner sign in</p>
+          <h2 className="font-display mt-3 text-3xl font-bold tracking-tight text-ink">Welcome back</h2>
+          <p className="mt-2 text-[13px] text-muted">Sign in to your Crave restaurant workspace.</p>
+
+          <label className="mt-8 block text-[12px] font-bold text-ink">
+            Work email
+            <input
+              type="email"
+              required
+              placeholder="you@restaurant.com"
+              className="mt-2 h-12 w-full rounded-xl border border-line-strong bg-surface px-4 text-[13px] outline-none transition focus:border-ink focus:bg-card"
+            />
+          </label>
+
+          <label className="mt-4 block text-[12px] font-bold text-ink">
+            Password
+            <span className="relative mt-2 block">
+              <input
+                type={show ? "text" : "password"}
+                required
+                placeholder="Enter your password"
+                className="h-12 w-full rounded-xl border border-line-strong bg-surface px-4 pr-16 text-[13px] outline-none transition focus:border-ink focus:bg-card"
+              />
+              <button
+                type="button"
+                onClick={() => setShow(!show)}
+                className="absolute right-4 top-3.5 text-[12px] font-semibold text-muted hover:text-ink"
+              >
+                {show ? "Hide" : "Show"}
+              </button>
+            </span>
+          </label>
+
+          <div className="mt-4 flex items-center justify-between text-[12px]">
+            <label className="flex items-center gap-2 text-muted">
+              <input type="checkbox" className="size-4 accent-ink" />
+              Remember me
+            </label>
+            <a href="#" className="font-bold text-ink hover:underline">
+              Forgot password?
+            </a>
+          </div>
+
+          <button className="mt-7 h-12 w-full rounded-xl bg-ink text-[13px] font-bold text-lime transition hover:bg-charcoal-soft">
+            Sign in securely
+          </button>
+
+          <div className="mt-6 border-t border-line pt-5 text-center">
+            <p className="text-[12px] text-muted">New to the platform?</p>
+            <Link href="/onboarding" className="mt-2 inline-block text-[12px] font-bold text-ink hover:underline">
+              Apply as a restaurant partner →
+            </Link>
+          </div>
+        </form>
+      </section>
+    </main>
+  );
 }
