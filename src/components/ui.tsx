@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useId, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { Icons } from "./icons";
 
 export function PageTitle({
@@ -260,14 +261,20 @@ export function SelectField({
   className?: string;
 }) {
   const [open, setOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
   const [menuBox, setMenuBox] = useState<{ top: number; left: number; width: number; openUp: boolean } | null>(null);
   const rootRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
   const listId = useId();
   const normalized = options.map((option) =>
     typeof option === "string" ? { value: option, label: option } : option,
   );
   const selected = normalized.find((option) => option.value === value);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   function updateMenuBox() {
     const rect = buttonRef.current?.getBoundingClientRect();
@@ -275,10 +282,12 @@ export function SelectField({
     const estimatedHeight = normalized.length * 44 + 16;
     const spaceBelow = window.innerHeight - rect.bottom;
     const openUp = spaceBelow < estimatedHeight && rect.top > spaceBelow;
+    const width = Math.max(rect.width, 160);
+    const left = Math.min(rect.left, window.innerWidth - width - 8);
     setMenuBox({
       top: openUp ? rect.top - 8 : rect.bottom + 8,
-      left: rect.left,
-      width: Math.max(rect.width, 160),
+      left: Math.max(8, left),
+      width,
       openUp,
     });
   }
@@ -287,7 +296,9 @@ export function SelectField({
     if (!open) return;
     updateMenuBox();
     function onPointerDown(event: MouseEvent) {
-      if (!rootRef.current?.contains(event.target as Node)) setOpen(false);
+      const target = event.target as Node;
+      if (rootRef.current?.contains(target) || menuRef.current?.contains(target)) return;
+      setOpen(false);
     }
     function onKeyDown(event: KeyboardEvent) {
       if (event.key === "Escape") setOpen(false);
@@ -307,6 +318,55 @@ export function SelectField({
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, normalized.length]);
+
+  const menu =
+    open && menuBox && mounted
+      ? createPortal(
+          <div
+            ref={menuRef}
+            id={listId}
+            role="listbox"
+            aria-label={label ?? "Options"}
+            style={{
+              position: "fixed",
+              top: menuBox.openUp ? undefined : menuBox.top,
+              bottom: menuBox.openUp ? window.innerHeight - menuBox.top : undefined,
+              left: menuBox.left,
+              width: menuBox.width,
+            }}
+            className="z-[120] overflow-hidden rounded-2xl border border-line bg-card p-1.5 shadow-[0_24px_60px_rgba(17,17,17,0.16)]"
+          >
+            {normalized.map((option) => {
+              const active = option.value === value;
+              return (
+                <button
+                  key={option.value}
+                  type="button"
+                  role="option"
+                  aria-selected={active}
+                  onClick={() => {
+                    onChange(option.value);
+                    setOpen(false);
+                  }}
+                  className={`flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-[13px] transition ${
+                    active ? "bg-ink text-lime" : "font-medium text-ink hover:bg-surface"
+                  }`}
+                >
+                  <span
+                    className={`grid size-5 shrink-0 place-items-center rounded-md ${
+                      active ? "bg-lime text-ink" : "bg-surface text-transparent ring-1 ring-line"
+                    }`}
+                  >
+                    <Icons.check size={12} />
+                  </span>
+                  <span className={`truncate ${active ? "font-bold" : ""}`}>{option.label}</span>
+                </button>
+              );
+            })}
+          </div>,
+          document.body,
+        )
+      : null;
 
   return (
     <div ref={rootRef} className={`relative ${className}`}>
@@ -335,50 +395,7 @@ export function SelectField({
           <Icons.chevron size={14} className={`transition ${open ? "rotate-180" : ""}`} />
         </span>
       </button>
-
-      {open && menuBox ? (
-        <div
-          id={listId}
-          role="listbox"
-          aria-label={label ?? "Options"}
-          style={{
-            position: "fixed",
-            top: menuBox.openUp ? undefined : menuBox.top,
-            bottom: menuBox.openUp ? window.innerHeight - menuBox.top : undefined,
-            left: menuBox.left,
-            width: menuBox.width,
-          }}
-          className="z-[80] overflow-hidden rounded-2xl border border-line bg-card p-1.5 shadow-[0_24px_60px_rgba(17,17,17,0.16)] animate-fade-up"
-        >
-          {normalized.map((option) => {
-            const active = option.value === value;
-            return (
-              <button
-                key={option.value}
-                type="button"
-                role="option"
-                aria-selected={active}
-                onClick={() => {
-                  onChange(option.value);
-                  setOpen(false);
-                }}
-                className={`flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-[13px] transition ${
-                  active ? "bg-ink text-lime" : "font-medium text-ink hover:bg-surface"
-                }`}
-              >
-                <span
-                  className={`grid size-5 shrink-0 place-items-center rounded-md ${
-                    active ? "bg-lime text-ink" : "bg-surface text-transparent ring-1 ring-line"
-                  }`}
-                >
-                  <Icons.check size={12} />
-                </span>
-                <span className={`truncate ${active ? "font-bold" : ""}`}>{option.label}</span>
-              </button>
-            );
-          })}
-        </div>
-      ) : null}
+      {menu}
     </div>
   );
 }
@@ -420,11 +437,17 @@ export function TimeField({
   className?: string;
 }) {
   const [open, setOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
   const [menuBox, setMenuBox] = useState<{ top: number; left: number; openUp: boolean } | null>(null);
   const rootRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
   const listId = useId();
   const parsed = parseTime24(value);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   function updateMenuBox() {
     const rect = buttonRef.current?.getBoundingClientRect();
@@ -434,7 +457,7 @@ export function TimeField({
     const openUp = spaceBelow < estimatedHeight && rect.top > spaceBelow;
     setMenuBox({
       top: openUp ? rect.top - 8 : rect.bottom + 8,
-      left: Math.min(rect.left, window.innerWidth - 280),
+      left: Math.max(8, Math.min(rect.left, window.innerWidth - 276)),
       openUp,
     });
   }
@@ -443,7 +466,9 @@ export function TimeField({
     if (!open) return;
     updateMenuBox();
     function onPointerDown(event: MouseEvent) {
-      if (!rootRef.current?.contains(event.target as Node)) setOpen(false);
+      const target = event.target as Node;
+      if (rootRef.current?.contains(target) || menuRef.current?.contains(target)) return;
+      setOpen(false);
     }
     function onKeyDown(event: KeyboardEvent) {
       if (event.key === "Escape") setOpen(false);
@@ -473,6 +498,101 @@ export function TimeField({
     );
   }
 
+  const picker =
+    open && menuBox && mounted
+      ? createPortal(
+          <div
+            ref={menuRef}
+            id={listId}
+            role="dialog"
+            aria-label={label ? `${label} time picker` : "Time picker"}
+            style={{
+              position: "fixed",
+              top: menuBox.openUp ? undefined : menuBox.top,
+              bottom: menuBox.openUp ? window.innerHeight - menuBox.top : undefined,
+              left: menuBox.left,
+              width: 268,
+            }}
+            className="z-[120] overflow-hidden rounded-2xl border border-line bg-card shadow-[0_24px_60px_rgba(17,17,17,0.16)]"
+          >
+            <div className="flex items-center justify-between border-b border-line bg-[linear-gradient(180deg,#fbfef4_0%,#ffffff_100%)] px-3 py-2.5">
+              <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-muted">Select time</p>
+              <span className="rounded-lg bg-ink px-2 py-1 text-[11px] font-bold text-lime">{formatTime12(value)}</span>
+            </div>
+
+            <div className="grid grid-cols-3 gap-1 p-2">
+              <div className="max-h-52 overflow-y-auto rounded-xl bg-surface p-1">
+                {TIME_HOURS.map((hour) => {
+                  const active = hour === parsed.hour12;
+                  return (
+                    <button
+                      key={hour}
+                      type="button"
+                      onClick={() => setPart({ hour12: hour })}
+                      className={`flex h-9 w-full items-center justify-center rounded-lg text-[13px] font-semibold transition ${
+                        active ? "bg-ink text-lime shadow-sm" : "text-ink hover:bg-card"
+                      }`}
+                    >
+                      {String(hour).padStart(2, "0")}
+                    </button>
+                  );
+                })}
+              </div>
+
+              <div className="max-h-52 overflow-y-auto rounded-xl bg-surface p-1">
+                {TIME_MINUTES.map((minute) => {
+                  const selectedMinute = TIME_MINUTES.includes(parsed.minute)
+                    ? parsed.minute
+                    : (Math.round(parsed.minute / 5) * 5) % 60;
+                  const active = minute === selectedMinute;
+                  return (
+                    <button
+                      key={minute}
+                      type="button"
+                      onClick={() => setPart({ minute })}
+                      className={`flex h-9 w-full items-center justify-center rounded-lg text-[13px] font-semibold transition ${
+                        active ? "bg-ink text-lime shadow-sm" : "text-ink hover:bg-card"
+                      }`}
+                    >
+                      {String(minute).padStart(2, "0")}
+                    </button>
+                  );
+                })}
+              </div>
+
+              <div className="rounded-xl bg-surface p-1">
+                {TIME_PERIODS.map((period) => {
+                  const active = period === parsed.period;
+                  return (
+                    <button
+                      key={period}
+                      type="button"
+                      onClick={() => setPart({ period })}
+                      className={`flex h-9 w-full items-center justify-center rounded-lg text-[13px] font-bold transition ${
+                        active ? "bg-ink text-lime shadow-sm" : "text-ink hover:bg-card"
+                      }`}
+                    >
+                      {period}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            <div className="flex items-center justify-end gap-2 border-t border-line px-3 py-2.5">
+              <button
+                type="button"
+                onClick={() => setOpen(false)}
+                className="rounded-lg px-3 py-2 text-[12px] font-bold text-muted transition hover:bg-surface hover:text-ink"
+              >
+                Done
+              </button>
+            </div>
+          </div>,
+          document.body,
+        )
+      : null;
+
   return (
     <div ref={rootRef} className={`relative ${className}`}>
       {label ? <p className="mb-1.5 text-[11px] font-semibold uppercase tracking-[0.08em] text-muted">{label}</p> : null}
@@ -498,96 +618,7 @@ export function TimeField({
           <Icons.clock size={13} />
         </span>
       </button>
-
-      {open && menuBox ? (
-        <div
-          id={listId}
-          role="dialog"
-          aria-label={label ? `${label} time picker` : "Time picker"}
-          style={{
-            position: "fixed",
-            top: menuBox.openUp ? undefined : menuBox.top,
-            bottom: menuBox.openUp ? window.innerHeight - menuBox.top : undefined,
-            left: menuBox.left,
-            width: 268,
-          }}
-          className="z-[80] overflow-hidden rounded-2xl border border-line bg-card shadow-[0_24px_60px_rgba(17,17,17,0.16)] animate-fade-up"
-        >
-          <div className="flex items-center justify-between border-b border-line bg-[linear-gradient(180deg,#fbfef4_0%,#ffffff_100%)] px-3 py-2.5">
-            <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-muted">Select time</p>
-            <span className="rounded-lg bg-ink px-2 py-1 text-[11px] font-bold text-lime">{formatTime12(value)}</span>
-          </div>
-
-          <div className="grid grid-cols-3 gap-1 p-2">
-            <div className="max-h-52 overflow-y-auto rounded-xl bg-surface p-1">
-              {TIME_HOURS.map((hour) => {
-                const active = hour === parsed.hour12;
-                return (
-                  <button
-                    key={hour}
-                    type="button"
-                    onClick={() => setPart({ hour12: hour })}
-                    className={`flex h-9 w-full items-center justify-center rounded-lg text-[13px] font-semibold transition ${
-                      active ? "bg-ink text-lime shadow-sm" : "text-ink hover:bg-card"
-                    }`}
-                  >
-                    {String(hour).padStart(2, "0")}
-                  </button>
-                );
-              })}
-            </div>
-
-            <div className="max-h-52 overflow-y-auto rounded-xl bg-surface p-1">
-              {TIME_MINUTES.map((minute) => {
-                const selectedMinute = TIME_MINUTES.includes(parsed.minute)
-                  ? parsed.minute
-                  : (Math.round(parsed.minute / 5) * 5) % 60;
-                const active = minute === selectedMinute;
-                return (
-                  <button
-                    key={minute}
-                    type="button"
-                    onClick={() => setPart({ minute })}
-                    className={`flex h-9 w-full items-center justify-center rounded-lg text-[13px] font-semibold transition ${
-                      active ? "bg-ink text-lime shadow-sm" : "text-ink hover:bg-card"
-                    }`}
-                  >
-                    {String(minute).padStart(2, "0")}
-                  </button>
-                );
-              })}
-            </div>
-
-            <div className="rounded-xl bg-surface p-1">
-              {TIME_PERIODS.map((period) => {
-                const active = period === parsed.period;
-                return (
-                  <button
-                    key={period}
-                    type="button"
-                    onClick={() => setPart({ period })}
-                    className={`flex h-9 w-full items-center justify-center rounded-lg text-[13px] font-bold transition ${
-                      active ? "bg-ink text-lime shadow-sm" : "text-ink hover:bg-card"
-                    }`}
-                  >
-                    {period}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
-          <div className="flex items-center justify-end gap-2 border-t border-line px-3 py-2.5">
-            <button
-              type="button"
-              onClick={() => setOpen(false)}
-              className="rounded-lg px-3 py-2 text-[12px] font-bold text-muted transition hover:bg-surface hover:text-ink"
-            >
-              Done
-            </button>
-          </div>
-        </div>
-      ) : null}
+      {picker}
     </div>
   );
 }

@@ -15,8 +15,13 @@ function formatModifierRule(group: ModifierGroup) {
   return `Optional · choose up to ${group.maxChoices}`;
 }
 
-function emptyOption(): ModifierOption {
-  return { id: `MO-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`, name: "", price: "0" };
+const DRAFT_OPTIONS: ModifierOption[] = [
+  { id: "MO-draft-1", name: "", price: "0" },
+  { id: "MO-draft-2", name: "", price: "0" },
+];
+
+function emptyOption(id: string): ModifierOption {
+  return { id, name: "", price: "0" };
 }
 
 async function fileToStoredImage(file: File): Promise<string> {
@@ -87,8 +92,9 @@ export default function MenuPage() {
   const [groupName, setGroupName] = useState("");
   const [groupRequired, setGroupRequired] = useState("Optional");
   const [groupMax, setGroupMax] = useState("1");
-  const [groupOptions, setGroupOptions] = useState<ModifierOption[]>([emptyOption(), emptyOption()]);
+  const [groupOptions, setGroupOptions] = useState<ModifierOption[]>(DRAFT_OPTIONS);
   const [groupError, setGroupError] = useState("");
+  const optionSeq = useRef(0);
 
   const visible = useMemo(
     () =>
@@ -133,12 +139,17 @@ export default function MenuPage() {
     resetForm();
   }
 
+  function nextOptionId() {
+    optionSeq.current += 1;
+    return `MO-draft-${optionSeq.current}`;
+  }
+
   function resetGroupForm() {
     setEditingGroupId(null);
     setGroupName("");
     setGroupRequired("Optional");
     setGroupMax("1");
-    setGroupOptions([emptyOption(), emptyOption()]);
+    setGroupOptions([emptyOption(nextOptionId()), emptyOption(nextOptionId())]);
     setGroupError("");
   }
 
@@ -157,28 +168,31 @@ export default function MenuPage() {
     setGroupName(group.name);
     setGroupRequired(group.required ? "Required" : "Optional");
     setGroupMax(String(group.maxChoices));
-    setGroupOptions(group.options.length ? group.options.map((option) => ({ ...option })) : [emptyOption()]);
+    setGroupOptions(
+      group.options.length
+        ? group.options.map((option) => ({ ...option }))
+        : [emptyOption(nextOptionId())],
+    );
     setGroupError("");
     setGroupOpen(true);
   }
 
-  function submitGroup(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault();
+  function saveGroup() {
     const cleaned = groupOptions
-      .map((option) => ({
-        ...option,
+      .map((option, index) => ({
+        id: option.id || `MO-draft-${index + 1}`,
         name: option.name.trim(),
-        price: option.price.trim() || "0",
+        price: (option.price || "0").trim() || "0",
       }))
       .filter((option) => option.name);
 
     if (!groupName.trim()) {
       setGroupError("Give this group a name, like Sauces or Choose your size.");
-      return;
+      return false;
     }
     if (!cleaned.length) {
       setGroupError("Add at least one option customers can pick.");
-      return;
+      return false;
     }
 
     const payload = {
@@ -190,12 +204,18 @@ export default function MenuPage() {
 
     if (editingGroupId) {
       updateModifierGroup(editingGroupId, payload);
-      setMessage(`${payload.name} updated.`);
+      setMessage(`${payload.name} saved to this browser.`);
     } else {
       addModifierGroup(payload);
-      setMessage(`${payload.name} added to your modifier groups.`);
+      setMessage(`${payload.name} added and saved to this browser.`);
     }
     closeGroupModal();
+    return true;
+  }
+
+  function submitGroup(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    saveGroup();
   }
 
   async function handleImageFile(file: File | null | undefined) {
@@ -700,7 +720,7 @@ export default function MenuPage() {
                   </div>
                   <button
                     type="button"
-                    onClick={() => setGroupOptions((current) => [...current, emptyOption()])}
+                    onClick={() => setGroupOptions((current) => [...current, emptyOption(nextOptionId())])}
                     className="text-[12px] font-bold text-ink hover:underline"
                   >
                     Add option +
@@ -778,7 +798,9 @@ export default function MenuPage() {
                     Cancel
                   </Button>
                 ) : null}
-                <Button type="submit">{editingGroupId ? "Save group" : "Add group"}</Button>
+                <Button type="button" onClick={() => saveGroup()}>
+                  {editingGroupId ? "Save group" : "Add group"}
+                </Button>
               </div>
             </div>
           </form>

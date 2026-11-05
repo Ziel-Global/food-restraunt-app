@@ -233,10 +233,45 @@ function loadStoredModifiers(): ModifierGroup[] | null {
     const raw = window.localStorage.getItem(MODIFIER_STORAGE_KEY);
     if (!raw) return null;
     const parsed = JSON.parse(raw) as ModifierGroup[];
-    return Array.isArray(parsed) ? parsed : null;
+    if (!Array.isArray(parsed)) return null;
+    return parsed.filter(
+      (group) =>
+        group &&
+        typeof group.id === "string" &&
+        typeof group.name === "string" &&
+        Array.isArray(group.options),
+    );
   } catch {
     return null;
   }
+}
+
+function persistModifiers(next: ModifierGroup[]) {
+  if (typeof window === "undefined") return;
+  try {
+    window.localStorage.setItem(MODIFIER_STORAGE_KEY, JSON.stringify(next));
+  } catch {
+    try {
+      // Prefer keeping modifier edits even if menu images filled storage.
+      window.localStorage.removeItem(MENU_STORAGE_KEY);
+      window.localStorage.setItem(MODIFIER_STORAGE_KEY, JSON.stringify(next));
+    } catch {
+      /* still keep UI working */
+    }
+  }
+}
+
+function persistMenu(next: MenuItem[]) {
+  if (typeof window === "undefined") return;
+  try {
+    window.localStorage.setItem(MENU_STORAGE_KEY, JSON.stringify(next));
+  } catch {
+    /* menu images can exceed quota */
+  }
+}
+
+function createId(prefix: string) {
+  return `${prefix}-${globalThis.crypto?.randomUUID?.() ?? `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`}`;
 }
 
 export function RestaurantWorkspaceProvider({ children }: React.PropsWithChildren) {
@@ -257,13 +292,13 @@ export function RestaurantWorkspaceProvider({ children }: React.PropsWithChildre
 
   useEffect(() => {
     if (!hydrated) return;
-    try {
-      window.localStorage.setItem(MENU_STORAGE_KEY, JSON.stringify(menu));
-      window.localStorage.setItem(MODIFIER_STORAGE_KEY, JSON.stringify(modifiers));
-    } catch {
-      /* localStorage can fill up with large images — keep UI working */
-    }
-  }, [menu, modifiers, hydrated]);
+    persistMenu(menu);
+  }, [menu, hydrated]);
+
+  useEffect(() => {
+    if (!hydrated) return;
+    persistModifiers(modifiers);
+  }, [modifiers, hydrated]);
 
   const value = useMemo(
     () => ({
@@ -278,15 +313,57 @@ export function RestaurantWorkspaceProvider({ children }: React.PropsWithChildre
         ),
       menu,
       toggleMenuItem: (id: string) =>
-        setMenu((current) => current.map((item) => (item.id === id ? { ...item, available: !item.available } : item))),
+        setMenu((current) => {
+          const next = current.map((item) => (item.id === id ? { ...item, available: !item.available } : item));
+          persistMenu(next);
+          return next;
+        }),
       addMenuItem: (item: Omit<MenuItem, "id">) =>
-        setMenu((current) => [{ ...item, id: `M-${Date.now()}` }, ...current]),
+        setMenu((current) => {
+          const next = [{ ...item, id: createId("M") }, ...current];
+          persistMenu(next);
+          return next;
+        }),
       modifiers,
       addModifierGroup: (group: Omit<ModifierGroup, "id">) =>
-        setModifiers((current) => [{ ...group, id: `MG-${Date.now()}` }, ...current]),
+        setModifiers((current) => {
+          const next = [
+            {
+              ...group,
+              id: createId("MG"),
+              options: group.options.map((option) => ({
+                ...option,
+                id: option.id?.startsWith("MO-draft") ? createId("MO") : option.id || createId("MO"),
+              })),
+            },
+            ...current,
+          ];
+          persistModifiers(next);
+          return next;
+        }),
       updateModifierGroup: (id: string, group: Omit<ModifierGroup, "id">) =>
-        setModifiers((current) => current.map((item) => (item.id === id ? { ...group, id } : item))),
-      deleteModifierGroup: (id: string) => setModifiers((current) => current.filter((item) => item.id !== id)),
+        setModifiers((current) => {
+          const next = current.map((item) =>
+            item.id === id
+              ? {
+                  ...group,
+                  id,
+                  options: group.options.map((option) => ({
+                    ...option,
+                    id: option.id?.startsWith("MO-draft") ? createId("MO") : option.id || createId("MO"),
+                  })),
+                }
+              : item,
+          );
+          persistModifiers(next);
+          return next;
+        }),
+      deleteModifierGroup: (id: string) =>
+        setModifiers((current) => {
+          const next = current.filter((item) => item.id !== id);
+          persistModifiers(next);
+          return next;
+        }),
       accepting,
       setAccepting,
       busyExtraMinutes,
