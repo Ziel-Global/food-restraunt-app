@@ -1,9 +1,15 @@
+"use client";
+
+import { useState } from "react";
 import { Icons } from "@/components/icons";
-import { Metric, PageTitle, Panel } from "@/components/ui";
+import { Metric, PageTitle, Panel, SelectField } from "@/components/ui";
 
 const bars = [42, 56, 48, 72, 64, 88, 76];
+const ranges = ["Last 7 days", "This month", "Last month"];
 
 export default function AnalyticsPage() {
+  const [range, setRange] = useState("Last 7 days");
+
   return (
     <div className="space-y-6">
       <PageTitle
@@ -11,11 +17,9 @@ export default function AnalyticsPage() {
         title="Your performance"
         description="Understand orders, sales and menu performance over time."
         action={
-          <select className="h-10 rounded-xl border border-line-strong bg-card px-3 text-[12px] font-semibold text-ink outline-none">
-            <option>Last 7 days</option>
-            <option>This month</option>
-            <option>Last month</option>
-          </select>
+          <div className="w-[180px]">
+            <SelectField value={range} options={ranges} onChange={setRange} />
+          </div>
         }
       />
 

@@ -180,38 +180,6 @@ export function RestaurantShell({ children }: { children: React.ReactNode }) {
           })}
         </nav>
 
-        {/* Service status */}
-        <div className="mx-3 mb-2 rounded-xl border border-white/[0.06] bg-gradient-to-b from-white/[0.04] to-transparent p-3.5">
-          <div className="flex items-center gap-2">
-            <span className="relative flex size-2">
-              {accepting ? <span className="absolute inset-0 animate-ping rounded-full bg-lime/50" /> : null}
-              <span className={`relative size-2 rounded-full ${accepting ? "bg-lime" : "bg-orange"}`} />
-            </span>
-            <span className="text-[11px] font-semibold tracking-tight">
-              {accepting ? "Accepting orders" : "Orders paused"}
-            </span>
-          </div>
-          <p className="mt-2 text-[10px] leading-4 text-white/35">
-            {accepting ? "Customers can place new orders now." : "Storefront is temporarily closed."}
-          </p>
-          <button
-            type="button"
-            onClick={() => setAccepting(!accepting)}
-            className="mt-3 inline-flex items-center gap-1.5 text-[11px] font-bold text-lime transition hover:text-white"
-          >
-            {accepting ? (
-              <>
-                <Icons.pause size={12} /> Pause orders
-              </>
-            ) : (
-              <>
-                <Icons.play size={12} /> Resume orders
-              </>
-            )}
-          </button>
-          <ApiHealth />
-        </div>
-
         {/* User */}
         <div className="mx-3 mb-3 flex items-center gap-3 rounded-xl border border-white/[0.06] bg-white/[0.03] px-3 py-2.5">
           <div className="grid size-8 place-items-center rounded-full bg-lime text-[10px] font-bold text-ink">MP</div>
@@ -255,18 +223,44 @@ export function RestaurantShell({ children }: { children: React.ReactNode }) {
             </div>
           </div>
           <div ref={headerMenusRef} className="flex items-center gap-2 sm:gap-3">
-            <button
-              type="button"
-              onClick={() => setAccepting(!accepting)}
-              className={`hidden h-10 items-center gap-2 rounded-xl border px-3.5 text-[11px] font-bold transition sm:flex ${
+            <div
+              className={`flex h-11 items-center gap-2 rounded-2xl border px-2 pl-3 transition ${
                 accepting
-                  ? "border-line bg-lime-soft text-ink"
-                  : "border-[#ffd7c2] bg-[#fff1e9] text-[#a86243]"
+                  ? "border-line bg-lime-soft/70"
+                  : "border-[#ffd7c2] bg-[#fff1e9]"
               }`}
             >
-              <span className={`size-1.5 rounded-full ${accepting ? "bg-lime-deep animate-pulse-dot" : "bg-orange"}`} />
-              {accepting ? "Accepting orders" : "Orders paused"}
-            </button>
+              <span className="hidden min-w-0 sm:block">
+                <span className="flex items-center gap-1.5 text-[11px] font-bold text-ink">
+                  <span className={`size-1.5 rounded-full ${accepting ? "bg-lime-deep animate-pulse-dot" : "bg-orange"}`} />
+                  {accepting ? "Accepting orders" : "Orders paused"}
+                </span>
+                <span className="mt-0.5 block text-[10px] text-muted">
+                  {accepting ? "Customers can order now" : "Storefront is closed"}
+                </span>
+              </span>
+              <button
+                type="button"
+                onClick={() => setAccepting(!accepting)}
+                className={`inline-flex h-8 items-center gap-1.5 rounded-xl px-3 text-[11px] font-bold transition ${
+                  accepting
+                    ? "bg-ink text-lime hover:bg-charcoal-soft"
+                    : "bg-orange text-white hover:brightness-95"
+                }`}
+              >
+                {accepting ? (
+                  <>
+                    <Icons.pause size={12} />
+                    <span className="hidden xs:inline sm:inline">Pause</span>
+                  </>
+                ) : (
+                  <>
+                    <Icons.play size={12} />
+                    <span className="hidden sm:inline">Resume</span>
+                  </>
+                )}
+              </button>
+            </div>
 
             {/* Notifications */}
             <div className="relative">
@@ -463,44 +457,3 @@ export function RestaurantShell({ children }: { children: React.ReactNode }) {
   );
 }
 
-function ApiHealth() {
-  const [state, setState] = useState<"checking" | "online" | "offline">("checking");
-  useEffect(() => {
-    const base = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3000/api";
-    fetch(`${base.replace(/\/$/, "")}/health`)
-      .then((response) => setState(response.ok ? "online" : "offline"))
-      .catch(() => setState("offline"));
-  }, []);
-  return (
-    <p className="mt-2 text-[10px] leading-4 text-white/35">
-      API{" "}
-      <span className={state === "online" ? "text-lime" : state === "offline" ? "text-orange" : "text-white/50"}>
-        {state === "checking" ? "checking…" : state === "online" ? "connected" : "preview mode"}
-      </span>
-    </p>
-  );
-}
-
-export function ApiStatus() {
-  const [online, setOnline] = useState<boolean | null>(null);
-  useEffect(() => {
-    const base = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3000/api";
-    fetch(`${base.replace(/\/$/, "")}/health`)
-      .then((response) => setOnline(response.ok))
-      .catch(() => setOnline(false));
-  }, []);
-  return (
-    <span
-      className={`inline-flex items-center gap-1.5 text-[11px] font-semibold ${
-        online ? "text-ink" : online === null ? "text-muted" : "text-orange"
-      }`}
-    >
-      <i
-        className={`size-1.5 rounded-full ${
-          online ? "bg-lime-deep" : online === null ? "bg-soft" : "bg-orange"
-        }`}
-      />
-      {online ? "API online · live kitchen data" : online === null ? "Connecting to API" : "Preview mode · API not reachable"}
-    </span>
-  );
-}

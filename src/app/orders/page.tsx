@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Badge, Button, Notice, PageTitle, Panel, Person, Search, SelectPill, StatCard, Table, Cell } from "@/components/ui";
+import { Badge, Button, Notice, PageTitle, Panel, Person, Search, SelectField, SelectPill, StatCard, Table, Cell } from "@/components/ui";
 import { Icons } from "@/components/icons";
 import { useRestaurantWorkspace, type OrderStatus } from "@/components/restaurant-context";
 
@@ -119,17 +119,13 @@ export default function OrdersPage() {
                   <div className="flex gap-1">
                     {order.status === "New order" ? (
                       <>
-                        <select
-                          aria-label="Preparation time"
-                          value={prepTime}
-                          onChange={(e) => setPrepTime(e.target.value)}
-                          className="h-10 rounded-xl border border-line-strong bg-card px-2 text-[11px] outline-none"
-                        >
-                          <option>15 min</option>
-                          <option>20 min</option>
-                          <option>25 min</option>
-                          <option>30 min</option>
-                        </select>
+                        <div className="w-[120px]">
+                          <SelectField
+                            value={prepTime}
+                            options={["15 min", "20 min", "25 min", "30 min"]}
+                            onChange={setPrepTime}
+                          />
+                        </div>
                         <Button onClick={() => advance(order.id, "Preparing", prepTime)}>Accept</Button>
                         <Button variant="danger" onClick={() => setRejecting(order.id)}>
                           Reject
@@ -168,16 +164,13 @@ export default function OrdersPage() {
           >
             <p className="text-[11px] font-bold uppercase tracking-wider text-orange">Reject order #{rejecting}</p>
             <h2 className="font-display mt-2 text-lg font-bold text-ink">Why can’t you take this order?</h2>
-            <select
-              value={reason}
-              onChange={(e) => setReason(e.target.value)}
-              className="mt-5 h-12 w-full rounded-xl border border-line-strong bg-surface px-3 text-[13px] outline-none"
-            >
-              <option>Too busy right now</option>
-              <option>Item unavailable</option>
-              <option>Restaurant is closing</option>
-              <option>Other</option>
-            </select>
+            <div className="mt-5">
+              <SelectField
+                value={reason}
+                options={["Too busy right now", "Item unavailable", "Restaurant is closing", "Other"]}
+                onChange={setReason}
+              />
+            </div>
             <div className="mt-5 flex justify-end gap-2">
               <Button variant="secondary" onClick={() => setRejecting(null)}>
                 Go back

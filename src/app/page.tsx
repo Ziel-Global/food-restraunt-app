@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { ApiStatus } from "@/components/RestaurantShell";
 import { useRestaurantWorkspace } from "@/components/restaurant-context";
 import { Icons } from "@/components/icons";
 import { Badge, Button, Metric, Notice, PageTitle, Panel, Person, Table, Cell } from "@/components/ui";
@@ -43,12 +42,13 @@ export default function RestaurantOverview() {
         }
       />
 
-      <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-line bg-card px-4 py-3">
-        <ApiStatus />
+      <div className="flex flex-wrap items-center justify-end gap-3">
         <button
           onClick={alertSound}
-          className={`rounded-lg px-3 py-2 text-[11px] font-bold transition ${
-            sound ? "bg-lime-soft text-ink" : "bg-surface text-muted hover:text-ink"
+          className={`rounded-xl border px-3.5 py-2.5 text-[11px] font-bold transition ${
+            sound
+              ? "border-line bg-lime-soft text-ink"
+              : "border-line bg-card text-muted hover:text-ink"
           }`}
         >
           {sound ? "Order alert sound enabled ✓" : "Enable order alert sound"}

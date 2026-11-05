@@ -196,4 +196,21 @@ export const Icons = {
       <path d="M7 4l14 8-14 8V4z" />
     </Svg>
   ),
+  image: (p: IconProps) => (
+    <Svg {...p}>
+      <rect x="3" y="5" width="18" height="14" rx="2" />
+      <circle cx="9" cy="10" r="1.8" />
+      <path d="M3 15l5-4 4 3 3-2 6 4" />
+    </Svg>
+  ),
+  upload: (p: IconProps) => (
+    <Svg {...p}>
+      <path d="M12 16V5M8 9l4-4 4 4M5 19h14" />
+    </Svg>
+  ),
+  trash: (p: IconProps) => (
+    <Svg {...p}>
+      <path d="M4 7h16M9 7V5h6v2M8 7l1 12h6l1-12" />
+    </Svg>
+  ),
 };
